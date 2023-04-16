@@ -1,5 +1,4 @@
-
-#installing packages not now
+#installing packages
 install.packages("dplyr")
 install.packages("tidyverse")
 install.packages("ggplot2")
