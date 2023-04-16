@@ -1,0 +1,160 @@
+---
+title: "Capstone Project"
+author: "Joey Lim"
+date: "2023-04-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Google Data Analytics Capstone Project on Cyclistic**
+**Introduction**:
+Cyclistic is a bike sharing app in Chicago that allows customers to unlock bikes from one station and return to any other station in the system online. It has 5,824 bicycles and a network of 692 stations across Chicago.
+
+This capstone project aims to cover the 6 steps of data analysis which are ASK, PREPARE, PROCESS, ANALYSE, SHARE and ACT. The list of deliverable required within this report are:
+
+* A clear statement of the business task
+* A description of all data sources used
+* Documentation of any cleaning or manipulation of data
+* A summary of your analysis
+* Supporting visualizations and key findings
+* Your top three recommendations based on your analysis
+
+## **Step 1: Ask**
+The Ask step contains identifying the business task and creating a clear statement of the business task.
+
+The pricing plans available are single-ride passes. full-day passes, and annual memberships. Customers who purchase the single-ride or full-day passes are referred to as casual riders while customers who purchase annual memberships are Cyclistic members. The company's finance department have analysed that annual members are much more profitable than casual riders therefore the company wishes to maximize the number of annual members rather than focusing on marketing campaigns that reaches out to only all-new customers.
+
+**Business Task**:
+Implementing marketing strategies aimed at converting casual riders into annual members by improving the casual riders experience.
+
+## **Step 2: Prepare**
+The Prepare step should contains downloading, sorting, filtering and storing the data.
+
+The data was downloaded from [here](https://divvy-tripdata.s3.amazonaws.com/index.html), the data was made available by Motivate International Inc. under this [license](https://www.divvybikes.com/data-license-agreement)
+
+The general file naming template of divvy-tripdata is <year><month>-divvy-tripdata.zip. This data study utilizes data from the 12 months of 2021. (202101-divvy-tripdata.zip to 202112-divvy-tripdata.zip).
+
+### Dataset Information
+
+Dataset file Name          | Dataset Size | Data download links
+:--------------------------|:-------------|:---------------------------------------------------------------
+2202101-divvy-tripdata.csv | 96,834       |https://divvy-tripdata.s3.amazonaws.com/202101-divvy-tripdata.zip
+2202102-divvy-tripdata.csv | 49,622       |https://divvy-tripdata.s3.amazonaws.com/202102-divvy-tripdata.zip
+2202103-divvy-tripdata.csv | 228,496      |https://divvy-tripdata.s3.amazonaws.com/202103-divvy-tripdata.zip
+2202104-divvy-tripdata.csv | 337,230      |https://divvy-tripdata.s3.amazonaws.com/202104-divvy-tripdata.zip
+2202105-divvy-tripdata.csv | 531,633      |https://divvy-tripdata.s3.amazonaws.com/202105-divvy-tripdata.zip
+2202106-divvy-tripdata.csv | 729,595      |https://divvy-tripdata.s3.amazonaws.com/202106-divvy-tripdata.zip
+2202107-divvy-tripdata.csv | 822,410      |https://divvy-tripdata.s3.amazonaws.com/202107-divvy-tripdata.zip
+2202108-divvy-tripdata.csv | 804,352      |https://divvy-tripdata.s3.amazonaws.com/202108-divvy-tripdata.zip
+2202109-divvy-tripdata.csv | 756,147      |https://divvy-tripdata.s3.amazonaws.com/202109-divvy-tripdata.zip
+2202110-divvy-tripdata.csv | 631,226      |https://divvy-tripdata.s3.amazonaws.com/202110-divvy-tripdata.zip
+2202111-divvy-tripdata.csv | 359,978      |https://divvy-tripdata.s3.amazonaws.com/202111-divvy-tripdata.zip
+2202112-divvy-tripdata.csv | 247,540      |https://divvy-tripdata.s3.amazonaws.com/202112-divvy-tripdata.zip
+
+### Preperation of Data
+* Downloaded all the data from tripdata
+* Unzipped and imported each csv file into a data frame
+* Removed an extra column in month_11 such that all 12 months have the same amount of columns for merging
+  + using select()
+* Merged the 12 data frames into a single data frame
+  + using rebind()
+ 
+## **Step 3: Process**
+The Process step contains checking the data for errors, using R to clean the data, transforming the data to work efficiently with it, documenting the cleaning process.
+
+### Cleaning the Data
+* Filtered out rows with empty data
+  + Used excel sheets to figure which columns have empty values with the filter function
+  + using filter()
+* Filtered out test data
+  + using filter() to filter out matches of "Hubbard Bike-checking (LBS-WH-TEST)"
+* Removed duplicate data
+  + using distinct()
+* Sampled data using [surveymonkey](https://www.surveymonkey.com/mp/sample-size-calculator/) to achieve a Confidence Level of  99% and Margin of Error of 1%
+  + using sample_n()
+
+```{r echo=FALSE,out.width = "700px", out.height = "300px"}
+library(ggplot2)
+
+knitr::include_graphics("C:/Users/user/Desktop/my_images/Calculation of sample size.png")
+```
+
+* Converted the started_at and ended_at to a "POSIXct" data type
+  + Splitting both columns into two other columns called "ended_at_time" and "ended_at_date" using str_split_fixed()
+  + converting the dates from a string type to date data type using parse_date_time() and format()
+  + formatting "ended_at_time" such that all values have a consistent formatting with 8 characters using ifelse()
+  + converting the time from a string data type to a time stamp data type using times()
+  + concatenating both "ended_at_date" and "ended_at_time" to "ended_at"
+  + converting it to a "POSIXct" data type using as.POSIXct()
+    
+### Preperation for analysis
+* Created a mins_rental column to calculate user's rental timing for each ride_id
+  + using minutes()
+* Created a weekday column
+  + using wday()
+* created a month column
+  + using month()
+*Preparation of data for ggmap()
+  + creation of two different data frames containing information related to either "members" or "casual" riders
+    + creating line_data data frame for both "members" and "casual" riders
+  + deriving bbox parameters using [OpenStreetMap](https://www.openstreetmap.org/export#map=11/41.8158/-87.6833)
+
+## **Step 4: Analyse**
+The Analyse step contains aggregating the data to perform analysis, organizing and formatting data and identifying trends and relationships. The goal of this step is to gain a deeper understanding of the data and to generate insights that can inform decision-making.
+
+### Analysis on Total Cyclist On Weekdays Bar Chart
+According to the the bar chart, most casual riders rented their bicycles on weekends, while the peak period for member riders occurred on weekdays, indicating a difference in rental patterns between these two groups. This difference in rental behaviour could be attributed to the greater availability of free time for casual riders on weekends as opposed to weekdays.
+
+```{r echo=FALSE,out.width = "802px", out.height = "593px"}
+library(ggplot2)
+
+knitr::include_graphics("C:/Users/user/Desktop/my_images/barchart1.png")
+```
+
+### Analysis on Total Cyclist On Different Months Bar Chart
+The data indicates that most casual riders rented their bicycles during the summer months of May to October, suggesting a correlation between bike rentals and the climate in Chicago throughout the year. Specifically, the peak period for renting bicycles aligns with the start and end of the summer season in Chicago.
+
+```{r echo=FALSE,out.width = "651px", out.height = "612px"}
+library(ggplot2)
+
+knitr::include_graphics("C:/Users/user/Desktop/my_images/barchart2.png")
+```
+
+```{r echo=FALSE,out.width = "753px", out.height = "253px"}
+library(ggplot2)
+
+knitr::include_graphics("C:/Users/user/Desktop/my_images/Climate_in_Chicago.png")
+```
+Climate Graph taken from [WeatherSpark](https://weatherspark.com/y/14091/Average-Weather-in-Chicago-Illinois-United-States-Year-Round)
+
+### Analysis on Total Rental Timing Of Cyclists
+Based on the graph and mean duration data, it appears that a significant proportion of casual cyclists opt to rent their bicycles for longer periods. Specifically, the mean rental time for casual cyclists is 26.60, which is more than twice the mean rental time for member cyclists, which is 12.37.
+
+```{r echo=FALSE,out.width = "807px", out.height = "621px"}
+library(ggplot2)
+
+knitr::include_graphics("C:/Users/user/Desktop/my_images/barchart3.png")
+```
+
+### Analysis on common path of riders
+To visualize the routes taken by riders within Chicago and identify common patterns, a path has been drawn from the starting coordinates to the ending coordinates. The analysis indicates that both member and casual cyclists follow comparable routes in the Northern region of Chicago. Additionally, a larger number of casual cyclists appear to travel towards the southern end of the city.
+
+```{r echo=FALSE,out.width = "807px", out.height = "638px"}
+library(ggplot2)
+
+knitr::include_graphics("C:/Users/user/Desktop/my_images/map3.png")
+```
+
+### Summary of findings
+The data suggests that most bike riders in Chicago rent bicycles on weekends and tend to ride more frequently in warmer weather. Additionally, casual riders often prefer to ride longer distances towards the southern end of the city. These areas represent opportunities for improving the riding experience and focusing efforts to encourage casual riders to become members.
+
+## **Step 5: Share**
+The Share step contains presenting the findings and insights to stakeholders in an understandable and compelling way. By creating effective data visualizations and presenting the findings in a clear and concise manner, data analysts can help to ensure that their insights are understood and acted upon, leading to positive outcomes for the organization.
+
+## **Step 6: Act**
+The Act step is the final phase of the process, in which stakeholders take action based on the insights and recommendations generated in the Analyse and Share steps.
+
+This presentation slide covers the execution of the 5th and 6th steps of data analysis [here](https://docs.google.com/presentation/d/1kDCKHQ5DCAgb4u8Fpr99d7A-dgAYg5yTKkyd6BwaNQY/edit?usp=sharing).
